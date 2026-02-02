@@ -7,6 +7,8 @@ import os
 if not os.path.exists("data"):
  os.makedirs("data")
 
+ 
+
 # GitHub Authentication function
 def github_auth(url, lsttoken, ct):
     jsonData = None
@@ -28,6 +30,10 @@ def countfiles(dictfiles, lsttokens, repo):
     ipage = 1  # url page counter
     ct = 0  # token counter
 
+    # detect languages once
+    languages = get_repo_languages(repo, lsttokens)
+    print("Detected languages:", languages)
+    
     try:
         # loop though all the commit pages until the last returned empty page
         while True:
@@ -47,12 +53,59 @@ def countfiles(dictfiles, lsttokens, repo):
                 filesjson = shaDetails['files']
                 for filenameObj in filesjson:
                     filename = filenameObj['filename']
-                    dictfiles[filename] = dictfiles.get(filename, 0) + 1
-                    print(filename)
+                    # if not is_source_file(filename, languages):
+                    #     continue
+                    # dictfiles[filename] = dictfiles.get(filename, 0) + 1
+                    # print(filename)
+                    if not filename:
+                        continue
+                    # ONLY count source files
+                    if is_source_file(filename, languages):
+                        dictfiles[filename] = dictfiles.get(filename, 0) + 1
+                        print(filename)
             ipage += 1
     except:
         print("Error receiving data")
         exit(0)
+
+
+# Retrieve the set of languages used in the given GitHub repo
+def get_repo_languages(repo, lsttokens):
+    """
+    Uses GitHub REST API to retrieve the language breakdown:
+    GET https://api.github.com/repos/{owner}/{repo}/languages
+    Returns a set of language names, e.g. {"Java", "Kotlin", "C++", "CMake"}.
+    """
+    url = f"https://api.github.com/repos/{repo}/languages"
+    data, _ = github_auth(url, lsttokens, 0)
+    if data:
+        return set(data.keys())
+    return set()
+
+
+# Map GitHub language names -> file extensions considered "source"
+LANGUAGE_EXTENSIONS = {
+    "Java": {".java"},
+    "Kotlin": {".kt", ".kts"},
+    "C": {".c", ".h"},
+    "C++": {".cpp", ".cc", ".cxx", ".hpp", ".hh", ".hxx", ".h"},
+    "CMake": {".cmake", "CMakeLists.txt"},
+}
+
+def is_source_file(filename, languages):
+    # handle special filenames
+    if filename.endswith("CMakeLists.txt") and "CMake" in languages:
+        return True
+
+    _, ext = os.path.splitext(filename.lower())
+
+    allowed_exts = set()
+    for lang in languages:
+        allowed_exts |= {e.lower() for e in LANGUAGE_EXTENSIONS.get(lang, set())
+                         if e.startswith(".")}
+
+    return ext in allowed_exts
+
 # GitHub repo
 repo = 'scottyab/rootbeer'
 # repo = 'Skyscanner/backpack' # This repo is commit heavy. It takes long to finish executing
@@ -67,9 +120,13 @@ repo = 'scottyab/rootbeer'
 lstTokens = ["",
              "" ]
 
+languages = get_repo_languages(repo, lstTokens)
+print(f"Repo languages: {languages}")
+
 dictfiles = dict()
 countfiles(dictfiles, lstTokens, repo)
 print('Total number of files: ' + str(len(dictfiles)))
+
 
 file = repo.split('/')[1]
 # change this to the path of your file
