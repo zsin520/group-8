@@ -148,9 +148,37 @@ def test_delete_account(setup_account):
 # - Ensure that passwords are stored as **hashed values**.
 # - Verify that plaintext passwords are never stored in the database.
 
-# TODO 6: Test Account Persistence
-# - Create an account, commit the session, and restart the session.
-# - Ensure the account still exists in the database.
+# TODO 6: Test valid withdrawal
+# - Verify that withdrawing a valid amount correctly decreases the balance.
+# ===========================
+# Test: Valid Withdrawal
+# Author: Connor Palmira
+# Date: 2026-02-10
+# Description: Ensure that withdrawals of positive values reduce the balance amount correctly
+# ===========================
+def test_valid_withdrawal(setup_account):
+    """Test successful withdrawal of positive values from account is correct"""
+
+    account = setup_account
+
+    with pytest.raises(DataValidationError):
+        account.withdraw(0)
+    with pytest.raises(DataValidationError):
+        account.withdraw(-50)
+
+    account.deposit(100)
+    db.session.commit()
+
+    balance = account.balance
+    withdraw_amount = 65
+
+    assert withdraw_amount > 0
+
+    account.withdraw(withdraw_amount)
+    db.session.commit()
+
+    expected_amount = balance - withdraw_amount
+    assert account.balance == expected_amount
 
 # TODO 7: Test Searching by Name
 # - Ensure accounts can be searched by their **name**.
