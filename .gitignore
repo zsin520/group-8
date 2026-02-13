@@ -1,0 +1,20 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE settings (VS Code, PyCharm)
+.vscode/
+.idea/
+
+# macOS clutter
+.DS_Store
