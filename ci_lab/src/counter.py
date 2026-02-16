@@ -43,7 +43,7 @@ def get_counter(name):
     """Retrieve an existing counter"""
     if name not in COUNTERS:
         return jsonify({"error": f"Counter '{name}' not found"}), HTTPStatus.NOT_FOUND
-    return jsonify({name: COUNTERS[name]}), HTTPStatus.OK
+    return jsonify({name: COUNTERS[name]}), HTTPStatus.CREATED
 
 
 @app.route("/counters/<name>", methods=["PUT"])
